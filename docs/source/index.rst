@@ -1,5 +1,5 @@
 **************************
-Documentation of LLM-Alchemy
+Documentation of LLM-Merging
 **************************
 
 .. toctree::
