@@ -9,7 +9,6 @@ from tqdm import tqdm
 from torch.utils import data
 
 from llm_merging.data import *
-from llm_merging.eval.metrics import accuracy, exact_match_multiple_references, numerical_accuracy, humaneval_preprocess
 
 def convert_dict_of_lists_to_list_of_dicts(dict_of_lists: Dict[Any, List]) -> List[Dict]:
     """
@@ -45,6 +44,22 @@ def collate_fn(batch_of_datapoints: List[Dict]) -> Dict[Any, List]:
     return datapoint_batched
 
 
+
+def accuracy(all_batches):
+    num_correct = 0
+    total = 0
+
+    for example in all_batches:
+        if example["predicted_choice"] == example["label"]:
+            num_correct += 1
+    
+    total = len(all_batches)
+
+    return {
+        "accuracy": num_correct / total
+    }, all_batches
+
+
 def evaluate_dataset(
     merge_method,
     dataset: str,
@@ -56,18 +71,10 @@ def evaluate_dataset(
         dataset = BoolQDataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
         eval_type = "multiple_choice"
         metric = "accuracy"
-    elif dataset == "triviaqa":
-        dataset = TriviaQADataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
-        eval_type = "generation"
-        metric = "exact_match_multiple_references"
-    elif dataset == "gsm8k":
-        dataset = GSM8kDataset(split="test", max_examples_per_dataset=None, round_robin_template=True)
-        eval_type = "generation"
-        metric = "numerical_accuracy"
-    elif dataset == "humaneval":
-        dataset = HumanEvalDataset(split="test", max_examples_per_dataset=None, round_robin_template=True)
-        eval_type = "generation"
-        metric = "humaneval" 
+    elif dataset == "math_qa":
+        dataset = MathQADataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
+        eval_type = "multiple_choice"
+        metric = "accuracy"
     else:
         raise NotImplementedError
 
@@ -109,13 +116,6 @@ def evaluate_dataset(
 
     if metric == "accuracy":
         score, all_batches = accuracy(all_batches)
-    elif metric == "exact_match_multiple_references":
-        score, all_batches  = exact_match_multiple_references(all_batches)
-    elif metric == "numerical_accuracy":
-        score, all_batches = numerical_accuracy(all_batches)
-    # Note that the human eval score is not calculated since it requires calling another library. Instead, the predictions are just saved  
-    elif metric is "humaneval":
-        score, all_batches = humaneval_preprocess(all_batches)
     else:
         raise NotImplementedError(f"Invalid metric {metric}")
     return score, all_batches

@@ -19,9 +19,21 @@ conda activate llm-merging
 
 ## Developing New Merging Methods 
 
-To add a new merging method, create a new file in `llm_merging/merging`. 
+1. To add a new merging method, create a new file in `llm_merging/merging`. 
 
-This file should the implement `__init__.py` and `merge.py` functions and extend `llm_merging/merging/BaseMerging`. 
+    This file should the implement `__init__.py` and `merge.py` functions and extend `llm_merging/merging/Merges`. 
 
-See `llm_merging/merging/FlanT5Avg.py` or `llm_merging/merging/LlamaAvg.py` for examples.  
+    See `llm_merging/merging/FlanT5Avg.py` or `llm_merging/merging/LlamaAvg.py` for examples.  
+
+2. Modify `setup.py` and add an entry with the merging method in`llm_merging.merging.Merges`. 
+   
+   For example, the entry `llama_avg = llm_merging.merging.LlamaAvg:LlamaAvg` indicates the method is called `llama_avg` and the file is at `llm_merging/merging/LlamaAvg` 
+
+## Evaluate Method 
+
+```
+python llm_merging/setup.py install 
+python llm_merging/main.py -m {merging_method}
+```
+
 

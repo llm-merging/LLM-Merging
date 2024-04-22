@@ -15,7 +15,7 @@ import llm_merging.model.decoder_functions as decoder_functions
 import llm_merging.model.encoder_decoder_functions as encoder_decoder_functions
 
 
-class BaseMerging(object):
+class Merges(object):
 
     def __init__(self):
         self.name = None

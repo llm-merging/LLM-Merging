@@ -1,11 +1,11 @@
 import torch 
 from typing import List, Tuple, Dict, Callable, Any
 
-from llm_merging.merging.BaseMerging import BaseMerging
+from llm_merging.merging.Merges import Merges
 
 from peft import get_peft_model, set_peft_model_state_dict
 
-class LlamaAvg(BaseMerging):
+class LlamaAvg(Merges):
     def __init__(self):
         super().__init__()
 

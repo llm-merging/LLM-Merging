@@ -5,27 +5,28 @@ from llm_merging.merging.Merges import Merges
 
 from peft import get_peft_model, set_peft_model_state_dict
 
-class FlanT5Avg(Merges):
+class MistralAvg(Merges):
     def __init__(self):
         super().__init__()
 
         # Give an interesting name to your method
-        self.name = "flan_t5_avg"
+        self.name = "mistral_avg"
         # Give a list of models to load for the merge 
-        self.list_models = [ "lorahub/flan_t5_xl-wiki_qa_Is_This_True_"]
+        self.list_models = ["predibase/gsm8k", 
+                            "predibase/glue_mnli"]
         
         # Loaded models and configs 
         self.loaded_models = {}
         self.loaded_configs = {}
 
         # Hyperparameters 
-        self.base_model_name = "google/flan-t5-xl"
-        self.max_seq_len = 512
+        self.base_model_name = "/fruitbasket/models/mistralai/Mistral-7B-v0.1"
+        self.max_seq_len = 1024
+        self.max_gen_len = 64
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.eval_batch_size = 128
 
         # Architecture must match base model. 
-        self.architecture = "encoder_decoder"
+        self.architecture = "decoder"
 
     # Implement merge function 
     def merge(
@@ -36,11 +37,10 @@ class FlanT5Avg(Merges):
         1) Load HuggingFace checkpoints and configs 
         '''
         super()._load_huggingface_models_and_configs()
-
         '''
         2) Merge checkpoints  
         '''
-        parameter_lambdas = [1]
+        parameter_lambdas = [1, 0]
 
         # Get individual models 
         all_models = list(self.loaded_models.values())
@@ -56,17 +56,24 @@ class FlanT5Avg(Merges):
                 if merged_parameter is None:
                     merged_parameter = torch.clone(parameter) * parameter_lambda
                 else:
+                    # # first model has rank 16 and second model has rank 8, so we expand the second model to rank 16 by adding zeros
+                    # if "A" in parameter_name:
+                    #     parameter = torch.cat([torch.zeros_like(parameter), parameter], dim=0)
+                    # else:
+                    #     assert "B" in parameter_name
+                    #     parameter = torch.cat([torch.zeros_like(parameter), parameter], dim=1)
                     merged_parameter += parameter * parameter_lambda
             merged_model[parameter_name] = merged_parameter
+
         '''
         3) Load base model and tokenizer 
         '''
         self._load_base_model()
         self._load_tokenizer()
 
-        '''
-        4) Load merged model into base model 
-        '''
+        # '''
+        # 4) Load merged model into base model 
+        # '''
         # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
         huggingface_config = list(self.loaded_configs.values())[0]
         if huggingface_config is not None:
