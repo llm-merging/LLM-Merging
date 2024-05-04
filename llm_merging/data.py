@@ -147,12 +147,42 @@ class BoolQDataset(P3Dataset):
         self.dataset_name = ("super_glue", "boolq")
         super().__init__(split, max_examples_per_dataset, round_robin_template)
 
-class MathQADataset(P3Dataset):
-    def __init__(self,
-                 split: str,
-                max_examples_per_dataset: int,
-                round_robin_template=False,):
-        # Dataset attributes
-        self.dataset_name = ("math_qa",)
+class MAWPSDataset(Dataset):
+    def __init__(
+        self,
+        split: str,
+        max_examples_per_dataset: int,
+        round_robin_template=False,
+    ):
+        self.dataset = ("MU-NLPC/Calc-mawps", )
         super().__init__(split, max_examples_per_dataset, round_robin_template)
 
+    def _get_data(self):
+        self._data = load_huggingface_dataset(
+                *self.dataset, split=self.split
+        )
+
+    def _get_templates(self):
+         self._templates = [
+            ("{question}", "{result}")
+        ]
+    
+    def _preprocess_example(self, example_idx, template_idx):
+
+        example = self._examples[example_idx]
+        template = self._templates[template_idx]
+
+        input = template[0].format(question=example["question"])
+        answer = template[1].format(result=example["result"])
+        
+        preprocessed_example = {
+            "example_idx": example_idx,
+            "template_idx": template_idx,
+            "input": input,
+            "answer": answer,
+        }
+        preprocessed_example = {
+            k: v for k, v in preprocessed_example.items() if v is not None
+        }
+        return preprocessed_example
+    

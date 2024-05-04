@@ -1,5 +1,6 @@
 import torch 
 import copy
+import os
 
 from peft import PeftModel, load_peft_weights, PeftConfig
 
@@ -44,9 +45,9 @@ class Merges(object):
 
     def _load_base_model(self):
         if self.architecture == "encoder_decoder":
-            self.base_model =  AutoModelForSeq2SeqLM.from_pretrained(self.base_model_name).to(self.device)
+            self.base_model =  AutoModelForSeq2SeqLM.from_pretrained(self.base_model_name, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
         elif self.architecture == "decoder":
-            self.base_model =  AutoModelForCausalLM.from_pretrained(self.base_model_name).to(self.device)
+            self.base_model =  AutoModelForCausalLM.from_pretrained(self.base_model_name, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
         else:
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
 
@@ -58,7 +59,8 @@ class Merges(object):
                 self.tokenizer = AutoTokenizer.from_pretrained(
                     self.base_model_name,
                     model_max_length=self.max_seq_len,
-                    legacy=False
+                    legacy=False,
+                    token=os.environ["HF_AUTH_TOKEN"]
                 )
 
         elif self.architecture == "decoder":
@@ -67,7 +69,8 @@ class Merges(object):
                 self.input_tokenizer = AutoTokenizer.from_pretrained(
                     self.base_model_name,
                     model_max_length=self.max_seq_len,
-                    legacy=False
+                    legacy=False,
+                    token=os.environ["HF_AUTH_TOKEN"]
                 )
                 self.target_tokenizer = copy.deepcopy(self.input_tokenizer)
 

@@ -20,7 +20,7 @@ class LlamaAvg(Merges):
         self.loaded_configs = {}
 
         # Hyperparameters 
-        self.base_model_name = "/fruitbasket/models/meta-llama/Llama-2-7b-hf"
+        self.base_model_name = "meta-llama/Llama-2-7b-hf"
         self.max_seq_len = 1024
         self.max_gen_len = 64
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,7 +66,7 @@ class LlamaAvg(Merges):
             merged_model[parameter_name] = merged_parameter
 
         '''
-        3) Load base model and tokenizer 
+        3) Load base model and tokenizer Pe
         '''
         self._load_base_model()
         self._load_tokenizer()

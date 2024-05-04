@@ -27,11 +27,10 @@ if __name__ == "__main__":
     # Call the merge function. The merged model is stored under merging_method object 
     merge_method.merge()
 
-
     # Evaluate method 
     evaluate_model(
         merge_method,
-        ["boolq", "math_qa"],
+        ["boolq", "mawps"],
         args.eval_batch_size
     )
 

@@ -20,7 +20,7 @@ class MistralAvg(Merges):
         self.loaded_configs = {}
 
         # Hyperparameters 
-        self.base_model_name = "/fruitbasket/models/mistralai/Mistral-7B-v0.1"
+        self.base_model_name = "mistralai/Mistral-7B-v0.1"
         self.max_seq_len = 1024
         self.max_gen_len = 64
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,13 +74,13 @@ class MistralAvg(Merges):
         # '''
         # 4) Load merged model into base model 
         # '''
-        # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
-        huggingface_config = list(self.loaded_configs.values())[0]
-        if huggingface_config is not None:
-            self.base_model = get_peft_model(self.base_model, huggingface_config)
-            set_peft_model_state_dict(self.base_model, merged_model)
+        # # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
+        # huggingface_config = list(self.loaded_configs.values())[0]
+        # if huggingface_config is not None:
+        #     self.base_model = get_peft_model(self.base_model, huggingface_config)
+        #     set_peft_model_state_dict(self.base_model, merged_model)
         
-        else:
-            self.base_model.load(merged_model)
+        # else:
+        #     self.base_model.load(merged_model)
 
         return self.base_model

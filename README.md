@@ -17,11 +17,13 @@ conda env create -f environment.yml --name llm-merging
 conda activate llm-merging 
 ```
 
+
+
 ## Developing New Merging Methods 
 
 1. To add a new merging method, create a new file in `llm_merging/merging`. 
 
-    This file should the implement `__init__.py` and `merge.py` functions and extend `llm_merging/merging/Merges`. 
+    This file should implement `__init__.py` and `merge.py` functions and extend `llm_merging/merging/Merges`. 
 
     See `llm_merging/merging/FlanT5Avg.py` or `llm_merging/merging/LlamaAvg.py` for examples.  
 
@@ -30,6 +32,9 @@ conda activate llm-merging
    For example, the entry `llama_avg = llm_merging.merging.LlamaAvg:LlamaAvg` indicates the method is called `llama_avg` and the file is at `llm_merging/merging/LlamaAvg` 
 
 ## Evaluate Method 
+Authentication tokens are requied for certain models like Llama2 which require user agreeing to some terms. 
+The authentication token can be found [here](https://huggingface.co/settings/tokens)
+export HF_AUTH_TOKEN=""
 
 ```
 python llm_merging/setup.py install 
