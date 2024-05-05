@@ -100,7 +100,6 @@ dependencies:
     - decorator==5.1.1
     - dill==0.3.8
     - distro==1.9.0
-    - evalplus==0.3.0.dev17
     - evaluate==0.4.1
     - exceptiongroup==1.2.0
     - executing==2.0.1
@@ -110,6 +109,7 @@ dependencies:
     - frozenlist==1.4.1
     - fsspec==2024.2.0
     - gitdb==4.0.11
+    - git+https://github.com/bigscience-workshop/promptsource
     - gitpython==3.1.43
     - gmpy2==2.1.2
     - h11==0.14.0
