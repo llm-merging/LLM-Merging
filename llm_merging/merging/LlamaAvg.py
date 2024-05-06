@@ -71,16 +71,16 @@ class LlamaAvg(Merges):
         self._load_base_model()
         self._load_tokenizer()
 
-        # '''
-        # 4) Load merged model into base model 
-        # '''
-        # # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
-        # huggingface_config = list(self.loaded_configs.values())[0]
-        # if huggingface_config is not None:
-        #     self.base_model = get_peft_model(self.base_model, huggingface_config)
-        #     set_peft_model_state_dict(self.base_model, merged_model)
+        '''
+        4) Load merged model into base model 
+        '''
+        # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
+        huggingface_config = list(self.loaded_configs.values())[0]
+        if huggingface_config is not None:
+            self.base_model = get_peft_model(self.base_model, huggingface_config)
+            set_peft_model_state_dict(self.base_model, merged_model)
         
-        # else:
-        #     self.base_model.load(merged_model)
+        else:
+            self.base_model.load(merged_model)
 
         return self.base_model

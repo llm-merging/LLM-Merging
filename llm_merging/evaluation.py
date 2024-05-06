@@ -96,7 +96,7 @@ def accuracy(all_batches):
     total = len(all_batches)
 
     return {
-        "accuracy": num_correct / total
+        "accuracy": float(num_correct) / total
     }, all_batches
 
 
@@ -123,7 +123,7 @@ def numerical_accuracy(all_batches):
     total = len(all_batches)
 
     return {
-        "accuracy": num_correct / total
+        "accuracy": float(num_correct) / total
     }, all_batches
 
 def evaluate_dataset(
