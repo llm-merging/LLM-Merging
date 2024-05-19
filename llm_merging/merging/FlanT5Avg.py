@@ -1,5 +1,4 @@
 import torch 
-from typing import List, Tuple, Dict, Callable, Any
 
 from llm_merging.merging.Merges import Merges
 
@@ -12,7 +11,8 @@ class FlanT5Avg(Merges):
         # Give an interesting name to your method
         self.name = "flan_t5_avg"
         # Give a list of models to load for the merge 
-        self.list_models = [ "lorahub/flan_t5_xl-wiki_qa_Is_This_True_"]
+        self.list_models = [ "lorahub/flan_t5_xl-wiki_qa_Is_This_True_",
+                            "lorahub/flan_t5_xl-kilt_tasks_hotpotqa_complex_question"]
         
         # Loaded models and configs 
         self.loaded_models = {}
@@ -40,7 +40,7 @@ class FlanT5Avg(Merges):
         '''
         2) Merge checkpoints  
         '''
-        parameter_lambdas = [1]
+        parameter_lambdas = [0.5, 0.5]
 
         # Get individual models 
         all_models = list(self.loaded_models.values())
@@ -75,5 +75,8 @@ class FlanT5Avg(Merges):
         
         else:
             self.base_model.load(merged_model)
+
+        # Requires to make results deterministic. If not set, we will just run once and use the results from the first pass. 
+        self.base_model.eval()
 
         return self.base_model

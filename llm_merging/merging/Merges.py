@@ -1,10 +1,8 @@
-import torch 
 import copy
 import os
 
-from peft import PeftModel, load_peft_weights, PeftConfig
+from peft import load_peft_weights, PeftConfig
 
-from typing import List, Tuple, Dict, Callable, Any
 
 from transformers import (
     AutoModelForSeq2SeqLM,
@@ -50,6 +48,7 @@ class Merges(object):
             self.base_model =  AutoModelForCausalLM.from_pretrained(self.base_model_name, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
         else:
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
+        
 
     def _load_tokenizer(self):
 

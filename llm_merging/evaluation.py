@@ -2,15 +2,15 @@ import logging
 import json 
 import os 
 import re
-from typing import List, Tuple, Dict, Callable, Any
+from typing import List, Dict, Any
 
 import torch
-import torch.distributed as dist
 from tqdm import tqdm
 from torch.utils import data
 from string import punctuation
 
 from llm_merging.data import *
+
 
 def convert_dict_of_lists_to_list_of_dicts(dict_of_lists: Dict[Any, List]) -> List[Dict]:
     """
@@ -48,29 +48,24 @@ def collate_fn(batch_of_datapoints: List[Dict]) -> Dict[Any, List]:
 def extract_predicted_number(predicted_txt):
     """
     The number is extracted according to the following order:
-    2. Getting the number right before '\n\n'
-    3. Getting the number right after '='
+    1. Use 
+    2. Getting the number right after '='
 
     Afterwards,
     - Commas are removed from the number
     """
 
     # Only keep the suffix after the last equal sign
-    EQUAL_SIGN_PREFIX = "="
-    split_equalSignPrefix = predicted_txt.split(EQUAL_SIGN_PREFIX)
-
+    split_equalSignPrefix = predicted_txt.split("=")
     equalSign_suffix = split_equalSignPrefix[-1]
     numbers_afterEqualSign = re.findall( r"\d+(?:[,.]\d+)?", equalSign_suffix)
 
     if len(split_equalSignPrefix) > 1 and len(numbers_afterEqualSign) > 0:
         remaining_answer = split_equalSignPrefix[-1]
-
-        # Use the first number after the suffix
-        number_idx = -1
+        number_idx = 0
 
     else:
         remaining_answer = predicted_txt
-
         # Use the last number in the text
         number_idx = -1
 
@@ -106,7 +101,7 @@ def numerical_accuracy(all_batches):
 
     for example in all_batches:
 
-        gold_number = example["answer"]
+        gold_number = example["target"]
         predicted_number = extract_predicted_number(example["predicted_text"])
         example["gold_number"] = gold_number
         example["predicted_number"] = predicted_number
@@ -129,7 +124,8 @@ def numerical_accuracy(all_batches):
 def evaluate_dataset(
     merge_method,
     dataset: str,
-    eval_batch_size: int
+    eval_batch_size: int,
+    dataset_filepath=None
 ) -> (Dict, List):
     
     # Different datasets have different evaluation functions to call and different metrics 
@@ -141,6 +137,10 @@ def evaluate_dataset(
         dataset = MAWPSDataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
         eval_type = "generation"
         metric = "numerical_accuracy"
+    elif dataset == "text_file":
+        dataset = TextFileDataset(dataset_filepath)
+        eval_type = "multiple_choice"
+        metric = "accuracy"
     else:
         raise NotImplementedError
 
@@ -191,24 +191,39 @@ def evaluate_dataset(
 def evaluate_model(
     merge_method,
     list_datasets: List[str],
+    list_dataset_filepaths: List[str],
     eval_batch_size: int
 ) -> Dict:
     logging.info(f"Evaluating model")
-
+    assert list_datasets is None or list_dataset_filepaths is None, f"Assume either list of datasets or list of dataset filepaths are passed in"
     output_dir = os.path.join("output", merge_method.get_name())
     os.makedirs(output_dir, exist_ok=True)
 
     all_scores = {}
 
-    # Loop through and evaluate the merge method on all the datasets
-    for dataset in list_datasets:
-        score, dataset_predictions = evaluate_dataset(merge_method, dataset, eval_batch_size)
-        all_scores[dataset] = score
+    # Evaluate all list of datasets 
+    if list_datasets is not None:
+        for dataset in list_datasets:
+            score, dataset_predictions = evaluate_dataset(merge_method, dataset, eval_batch_size, dataset_filepath=None)
+            all_scores[dataset] = score
 
-        # Save the predictions 
-        with open(os.path.join(output_dir, f"{dataset}_predictions.jsonl"), "w+") as f:
-            for example in dataset_predictions:
-                f.write(json.dumps(example) + "\n")
+            # Save the predictions 
+            with open(os.path.join(output_dir, f"{dataset}_predictions.jsonl"), "w+") as f:
+                for example in dataset_predictions:
+                    f.write(json.dumps(example) + "\n")
+    # Evaluate all list of dataset filepaths 
+    else:
+        assert list_dataset_filepaths is not None
+
+        for dataset_filepath in list_dataset_filepaths:
+            score, dataset_predictions = evaluate_dataset(merge_method, "text_file", eval_batch_size, dataset_filepath)
+
+            dataset_name = dataset_filepath.split("/")[-1].replace(".json", "")
+            all_scores[dataset_name] = score
+            # Save the predictions 
+            with open(os.path.join(output_dir, f"{dataset_name}_predictions.jsonl"), "w+") as f:
+                for example in dataset_predictions:
+                    f.write(json.dumps(example) + "\n")        
 
     with open(os.path.join(output_dir, f"scores.jsonl"), "a+") as f:
         f.write(json.dumps(all_scores) + "\n")

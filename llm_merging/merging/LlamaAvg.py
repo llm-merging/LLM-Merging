@@ -1,5 +1,4 @@
 import torch 
-from typing import List, Tuple, Dict, Callable, Any
 
 from llm_merging.merging.Merges import Merges
 
@@ -40,7 +39,7 @@ class LlamaAvg(Merges):
         '''
         2) Merge checkpoints  
         '''
-        parameter_lambdas = [1, 0]
+        parameter_lambdas = [0.8, 0.2]
 
         # Get individual models 
         all_models = list(self.loaded_models.values())
@@ -66,7 +65,7 @@ class LlamaAvg(Merges):
             merged_model[parameter_name] = merged_parameter
 
         '''
-        3) Load base model and tokenizer Pe
+        3) Load base model and tokenizer
         '''
         self._load_base_model()
         self._load_tokenizer()
@@ -82,5 +81,8 @@ class LlamaAvg(Merges):
         
         else:
             self.base_model.load(merged_model)
+
+        # Requires to make results deterministic. If not set, we will just run once and use the results from the first pass. 
+        self.base_model.eval()
 
         return self.base_model

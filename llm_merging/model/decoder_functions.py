@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 def predict_multiple_choice(
@@ -135,6 +134,7 @@ def generate(
         eos_token_id=input_tokenizer.eos_token_id,
         pad_token_id=input_tokenizer.pad_token_id,
         bos_token_id=input_tokenizer.bos_token_id,
+        do_sample=False,
         return_dict_in_generate=True,
     )
 

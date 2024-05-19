@@ -1,5 +1,4 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -119,9 +118,9 @@ def generate(
         eos_token_id=tokenizer.eos_token_id,
         pad_token_id=tokenizer.pad_token_id,
         bos_token_id=tokenizer.bos_token_id,
+        do_sample=False,
         return_dict_in_generate=True,
     )
-
     generated_txt = tokenizer.batch_decode(
         generation_output["sequences"], skip_special_tokens=True
     )

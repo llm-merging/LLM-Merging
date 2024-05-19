@@ -1,5 +1,5 @@
 import torch 
-
+import json 
 from typing import List, Tuple, Dict, Callable, Any
 
 from jinja2 import Template
@@ -7,7 +7,6 @@ from promptsource.templates import DatasetTemplates
 from datasets import load_dataset as load_huggingface_dataset
 
 # Code from https://github.com/r-three/phatgoose
-
 def find_label(target: str, answer_choices: List[str]) -> int:
     """
 
@@ -23,7 +22,6 @@ def find_label(target: str, answer_choices: List[str]) -> int:
             return idx
     
     return -1
-
 
 class Dataset(object):
     def __init__(
@@ -173,13 +171,57 @@ class MAWPSDataset(Dataset):
         template = self._templates[template_idx]
 
         input = template[0].format(question=example["question"])
-        answer = template[1].format(result=example["result"])
+        target = template[1].format(result=example["result"])
         
         preprocessed_example = {
             "example_idx": example_idx,
             "template_idx": template_idx,
             "input": input,
-            "answer": answer,
+            "target": target,
+        }
+        preprocessed_example = {
+            k: v for k, v in preprocessed_example.items() if v is not None
+        }
+        return preprocessed_example
+
+class TextFileDataset(Dataset):
+    def __init__(
+        self,
+        dataset_filepath
+    ):
+        self.dataset_filepath = dataset_filepath
+        super().__init__(split="test", max_examples_per_dataset=None, round_robin_template=False)
+
+    def _get_data(self):
+        self._data = []
+        with open(self.dataset_filepath, "r") as f:
+            for line in f.readlines():
+                datapoint = json.loads(line.strip("\n"))
+                self._data.append(datapoint)
+
+    def _get_templates(self):
+         self._templates = [
+            ("{input}", "{target}")
+        ]
+    
+    def _preprocess_example(self, example_idx, template_idx):
+
+        example = self._examples[example_idx]
+        template = self._templates[template_idx]
+
+        input = template[0].format(input=example["input"])
+        target = template[1].format(target=example["target"])
+        answer_choices = [template[1].format(target=answer_choice) for answer_choice in example["answer_choices"]]
+        
+        label = find_label(target, answer_choices)
+
+        preprocessed_example = {
+            "example_idx": example_idx,
+            "template_idx": template_idx,
+            "input": input,
+            "target": target,
+            "answer_choices": answer_choices,
+            "label": example["label"]
         }
         preprocessed_example = {
             k: v for k, v in preprocessed_example.items() if v is not None
