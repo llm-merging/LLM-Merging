@@ -130,11 +130,11 @@ def evaluate_dataset(
     
     # Different datasets have different evaluation functions to call and different metrics 
     if dataset == "boolq":
-        dataset = BoolQDataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
+        dataset = BoolQDataset(split="validation", max_examples_per_dataset=None, round_robin_template=True)
         eval_type = "multiple_choice"
         metric = "accuracy"
     elif dataset == "mawps":
-        dataset = MAWPSDataset(split="validation", max_examples_per_dataset=100, round_robin_template=True)
+        dataset = MAWPSDataset(split="validation", max_examples_per_dataset=None, round_robin_template=True)
         eval_type = "generation"
         metric = "numerical_accuracy"
     elif dataset == "text_file":
@@ -198,6 +198,8 @@ def evaluate_model(
     assert list_datasets is None or list_dataset_filepaths is None, f"Assume either list of datasets or list of dataset filepaths are passed in"
     output_dir = os.path.join("output", merge_method.get_name())
     os.makedirs(output_dir, exist_ok=True)
+    # Save merged model 
+    merge_method.save_model(output_dir)
 
     all_scores = {}
 
@@ -224,6 +226,11 @@ def evaluate_model(
             with open(os.path.join(output_dir, f"{dataset_name}_predictions.jsonl"), "w+") as f:
                 for example in dataset_predictions:
                     f.write(json.dumps(example) + "\n")        
+
+    # Get average score across all datasets 
+    all_scores["average"] = {
+        "accuracy": round(sum([score["accuracy"] for score in all_scores.values()]) / len(all_scores), 3)
+    }
 
     with open(os.path.join(output_dir, f"scores.jsonl"), "a+") as f:
         f.write(json.dumps(all_scores) + "\n")

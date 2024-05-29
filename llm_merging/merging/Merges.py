@@ -2,6 +2,7 @@ import copy
 import os
 
 from peft import load_peft_weights, PeftConfig
+from safetensors.torch import save_file
 
 
 from transformers import (
@@ -34,6 +35,8 @@ class Merges(object):
 
         self.device = None
         self.architecture = None
+
+        self.merged_model = None
 
     def get_name(self):
         return self.name
@@ -135,3 +138,9 @@ class Merges(object):
         self,
     ):
         raise NotImplementedError
+    
+    def save_model(self, output_dir):
+        assert self.merged_model is not None, "Merged model is empty"
+        assert len(self.merged_model) > 0, "Merged model is empty"
+        # Save merged model as safetensor 
+        save_file(self.merged_model, os.path.join(output_dir, "safetensor.pt"))

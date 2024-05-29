@@ -1,7 +1,5 @@
 import argparse
-from tqdm import tqdm
 
-import torch
 
 from importlib.metadata import entry_points
 
@@ -29,7 +27,7 @@ if __name__ == "__main__":
     merge_method.merge()
 
     if args.dataset_filepaths is not None:
-        # Evaluate method on fixed datasets (used for testing)
+        # Evaluate method on datsets passed in (used for testing)
         evaluate_model(
             merge_method,
             None,
