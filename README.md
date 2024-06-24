@@ -32,6 +32,7 @@ export HF_AUTH_TOKEN=""
 Do not modify any files other than the new file created and `setup.py`. Doing so can result in the grounds for invalidating your submission. If there is any code in the other files you need to change, feel free to open a pull request to change it. 
 
 1. To add a new merging method, create a new file in `llm_merging/merging`. 
+
     This file should implement `__init__.py` and `merge.py` functions and extend `llm_merging/merging/Merges`. 
     See `llm_merging/merging/FlanT5Avg.py` or `llm_merging/merging/LlamaAvg.py` for examples.  
 
@@ -39,14 +40,28 @@ Do not modify any files other than the new file created and `setup.py`. Doing so
    
    For example, the entry `llama_avg = llm_merging.merging.LlamaAvg:LlamaAvg` indicates the method is called `llama_avg` and the file is at `llm_merging/merging/LlamaAvg` 
 
-## Evaluate Method 
+    Any other libraries required can be specified in `setup.py`
+
+## Test Method 
 
 ```
 python llm_merging/setup.py install 
 python llm_merging/main.py -m {merging_method}
 ```
 
+The datasets (CosmosQA and BoolQ) are mainly included for ensuring the merging method (with eval on those datasets) run in under the 1 hour time limit. 
+Our results on `llama_avg` are `{"cosmos_qa": {"accuracy": 0.234}, "xsum": {"rouge1": 0.123, "rouge2": 0.023, "rougeL": 0.093, "rougeLsum": 0.102}}` , which run in about `25` minutes on our A6000. 
+
 
 ## Submissions
 
-After modifying the file, zip the file in a tarball and send to ``. 
+
+After modifying the file, tar the file in a tarball using the command 
+
+```
+tar -cvf llm-merging.tar LLM-Merging
+``` 
+
+Attach the tar file in an email and send to `llm.merging@gmail.com` with the subject as `submission: {method_name}` where `{method_name}` is the same method_name used when calling `llm_merging/main.py`.
+
+Note this submission method is only temporary and another automatic submission method should be comming soon. 

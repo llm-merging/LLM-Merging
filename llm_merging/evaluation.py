@@ -1,16 +1,14 @@
-import logging
 import json 
 import os 
-import re
+import evaluate 
+
 from typing import List, Dict, Any
 
 import torch
 from tqdm import tqdm
 from torch.utils import data
-from string import punctuation
 
 from llm_merging.data import *
-
 
 def convert_dict_of_lists_to_list_of_dicts(dict_of_lists: Dict[Any, List]) -> List[Dict]:
     """
@@ -45,108 +43,17 @@ def collate_fn(batch_of_datapoints: List[Dict]) -> Dict[Any, List]:
                 datapoint_batched[key] = [value]
     return datapoint_batched
 
-def extract_predicted_number(predicted_txt):
-    """
-    The number is extracted according to the following order:
-    1. Use 
-    2. Getting the number right after '='
-
-    Afterwards,
-    - Commas are removed from the number
-    """
-
-    # Only keep the suffix after the last equal sign
-    split_equalSignPrefix = predicted_txt.split("=")
-    equalSign_suffix = split_equalSignPrefix[-1]
-    numbers_afterEqualSign = re.findall( r"\d+(?:[,.]\d+)?", equalSign_suffix)
-
-    if len(split_equalSignPrefix) > 1 and len(numbers_afterEqualSign) > 0:
-        remaining_answer = split_equalSignPrefix[-1]
-        number_idx = 0
-
-    else:
-        remaining_answer = predicted_txt
-        # Use the last number in the text
-        number_idx = -1
-
-    # Remove comma in numbers large numbers
-    # Find all numbers (including decimals) and return the last number
-    numerical_answer = re.findall(r"\d+(?:[,.]\d+)?", remaining_answer)
-    if len(numerical_answer) > 0:
-        return numerical_answer[number_idx].replace(
-                punctuation, ""
-            ).replace(",", "")
-    else:
-        return None
-
-
-def accuracy(all_batches):
-    num_correct = 0
-    total = 0
-
-    for example in all_batches:
-        if example["predicted_choice"] == example["label"]:
-            num_correct += 1
-    
-    total = len(all_batches)
-
-    return {
-        "accuracy": float(num_correct) / total
-    }, all_batches
-
-
-
-def numerical_accuracy(all_batches):
-    num_correct = 0
-
-    for example in all_batches:
-
-        gold_number = example["target"]
-        predicted_number = extract_predicted_number(example["predicted_text"])
-        example["gold_number"] = gold_number
-        example["predicted_number"] = predicted_number
-
-        if predicted_number is not None:
-            if "/" in gold_number:
-                numerator, denominator = gold_number.split("/")
-                gold_number =  float(numerator) / float(denominator)
-            
-            is_correct = float(predicted_number) == float(gold_number)
-            if is_correct:
-                num_correct += 1
-
-    total = len(all_batches)
-
-    return {
-        "accuracy": float(num_correct) / total
-    }, all_batches
 
 def evaluate_dataset(
     merge_method,
-    dataset: str,
-    eval_batch_size: int,
-    dataset_filepath=None
+    dataset_filepath: str,
+    eval_type: str,
+    metric: str,
 ) -> (Dict, List):
-    
-    # Different datasets have different evaluation functions to call and different metrics 
-    if dataset == "boolq":
-        dataset = BoolQDataset(split="validation", max_examples_per_dataset=None, round_robin_template=True)
-        eval_type = "multiple_choice"
-        metric = "accuracy"
-    elif dataset == "mawps":
-        dataset = MAWPSDataset(split="validation", max_examples_per_dataset=None, round_robin_template=True)
-        eval_type = "generation"
-        metric = "numerical_accuracy"
-    elif dataset == "text_file":
-        dataset = TextFileDataset(dataset_filepath)
-        eval_type = "multiple_choice"
-        metric = "accuracy"
-    else:
-        raise NotImplementedError
 
     data_loader = data.DataLoader(
-        dataset,
-        batch_size=eval_batch_size,
+        Dataset(dataset_filepath),
+        batch_size=1,
         num_workers=0,
         shuffle=False,
         collate_fn=collate_fn
@@ -181,56 +88,48 @@ def evaluate_dataset(
                 all_batches.extend(convert_dict_of_lists_to_list_of_dicts(batch))
 
     if metric == "accuracy":
-        score, all_batches = accuracy(all_batches)
-    elif metric == "numerical_accuracy":
-        score, all_batches = numerical_accuracy(all_batches)
+        accuracy = evaluate.load('accuracy')
+        score = accuracy.compute(references=[example["label"] for example in all_batches], predictions=[example["predicted_choice"] for example in all_batches])
+    elif metric == "rouge":
+        rouge = evaluate.load('rouge')
+        score = rouge.compute(
+            predictions=[example["predicted_text"] for example in all_batches],
+            references=[example["target"] for example in all_batches])
+    elif metric == "none":
+        score = {}
     else:
         raise NotImplementedError(f"Invalid metric {metric}")
+
+    for metric, value in score.items():
+        score[metric] = round(value, 3)
+
     return score, all_batches
 
 def evaluate_model(
     merge_method,
-    list_datasets: List[str],
-    list_dataset_filepaths: List[str],
-    eval_batch_size: int
-) -> Dict:
-    logging.info(f"Evaluating model")
-    assert list_datasets is None or list_dataset_filepaths is None, f"Assume either list of datasets or list of dataset filepaths are passed in"
+    all_dataset_filepaths: List[str],
+    all_eval_types: List[str],
+    all_metrics: List[str],
+) -> Dict:   
     output_dir = os.path.join("output", merge_method.get_name())
-    os.makedirs(output_dir, exist_ok=True)
+    prediction_dir = os.path.join(output_dir, "predictions")
+    os.makedirs(prediction_dir, exist_ok=True)
     # Save merged model 
     merge_method.save_model(output_dir)
 
     all_scores = {}
 
-    # Evaluate all list of datasets 
-    if list_datasets is not None:
-        for dataset in list_datasets:
-            score, dataset_predictions = evaluate_dataset(merge_method, dataset, eval_batch_size, dataset_filepath=None)
-            all_scores[dataset] = score
+    for dataset_filepath, eval_type, metric in zip(all_dataset_filepaths, all_eval_types, all_metrics):
+        score, dataset_predictions = evaluate_dataset(merge_method, dataset_filepath, eval_type, metric)
 
-            # Save the predictions 
-            with open(os.path.join(output_dir, f"{dataset}_predictions.jsonl"), "w+") as f:
-                for example in dataset_predictions:
-                    f.write(json.dumps(example) + "\n")
-    # Evaluate all list of dataset filepaths 
-    else:
-        assert list_dataset_filepaths is not None
+        # Get dataset_name from filepath assuming the filepath is in the format of "data/{dataset_name}.json"
+        dataset_name = dataset_filepath.split("/")[-1].replace(".json", "")
+        all_scores[dataset_name] = score
 
-        for dataset_filepath in list_dataset_filepaths:
-            score, dataset_predictions = evaluate_dataset(merge_method, "text_file", eval_batch_size, dataset_filepath)
-
-            dataset_name = dataset_filepath.split("/")[-1].replace(".json", "")
-            all_scores[dataset_name] = score
-            # Save the predictions 
-            with open(os.path.join(output_dir, f"{dataset_name}_predictions.jsonl"), "w+") as f:
-                for example in dataset_predictions:
-                    f.write(json.dumps(example) + "\n")        
-
-    # Get average score across all datasets 
-    all_scores["average"] = {
-        "accuracy": round(sum([score["accuracy"] for score in all_scores.values()]) / len(all_scores), 3)
-    }
+        # Save the predictions 
+        with open(os.path.join(prediction_dir, f"{dataset_name}.jsonl"), "w+") as f:
+            for example in dataset_predictions:
+                f.write(json.dumps(example) + "\n")        
 
     with open(os.path.join(output_dir, f"scores.jsonl"), "a+") as f:
         f.write(json.dumps(all_scores) + "\n")

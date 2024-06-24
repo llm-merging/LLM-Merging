@@ -5,7 +5,6 @@ def predict_multiple_choice(
     transformer, input_tokenizer, target_tokenizer, batch
 ): 
     tokenized_batch = tokenize_batch(input_tokenizer, target_tokenizer, batch, transformer.device)
-
     output = transformer(
         input_ids=tokenized_batch["input_ids"],
         attention_mask=tokenized_batch["input_mask"],
@@ -125,7 +124,6 @@ def generate(
     max_gen_len
 ):
     tokenized_batch = tokenize_batch(input_tokenizer, target_tokenizer, batch, transformer.device)
-
 
     generation_output = transformer.generate(
         input_ids=tokenized_batch["input_ids"],

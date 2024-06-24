@@ -1,6 +1,5 @@
 """Install the llm_merging library"""
 
-import ast
 
 from setuptools import setup
 
@@ -15,7 +14,7 @@ setup(
     entry_points={
         "llm_merging.merging.Merges": [
             "llama_avg = llm_merging.merging.LlamaAvg:LlamaAvg",
-            "flan_t5_avg = llm_merging.merging.FlanT5Avg:FlanT5Avg",
+            "flan_t5_avg = llm_merging.merging.FlanT5Avg:FlanT5Avg"
         ]
     },
 )

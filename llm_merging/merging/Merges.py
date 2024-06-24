@@ -17,8 +17,8 @@ import llm_merging.model.encoder_decoder_functions as encoder_decoder_functions
 
 class Merges(object):
 
-    def __init__(self):
-        self.name = None
+    def __init__(self, name):
+        self.name = name
 
         self.list_models = None
          
@@ -92,9 +92,6 @@ class Merges(object):
                 self.target_tokenizer.add_eos_token = True
         else:
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
-        
-    def get_eval_batch_size(self):
-        return self.eval_batch_size
 
     def predict_multiple_choice(self, batch):
         assert self.base_model is not None
