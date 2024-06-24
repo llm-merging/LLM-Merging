@@ -4,30 +4,35 @@ from llm_merging.merging.Merges import Merges
 from peft import get_peft_model, set_peft_model_state_dict
 
 class LlamaAvg(Merges):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
-        # Give an interesting name to your method
-        self.name = "llama_avg"
+        '''
+        These values are meant to be modified by the user.
+        '''
         # Give a list of models to load for the merge 
         self.list_models = ["abcdabcd987/gsm8k-llama2-7b-lora-16", 
                             "FinGPT/fingpt-forecaster_dow30_llama2-7b_lora"]
-        
-        # Loaded models and configs 
-        self.loaded_models = {}
-        self.loaded_configs = {}
+
 
         # Hyperparameters 
         self.base_model_name = "meta-llama/Llama-2-7b-hf"
-        self.max_seq_len = 1024
+        self.max_seq_len = None
         self.max_gen_len = 64
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Architecture must match base model. 
         self.architecture = "decoder"
+        '''
+        These are variables used later in the code and not intended to be set, but feel free to adapt to your use case.  
+        '''
+        # Loaded models and configs 
+        self.loaded_models = {}
+        self.loaded_configs = {}
 
         # Merged model parameters
         self.merged_model = {}
+
 
 
     # Implement merge function 

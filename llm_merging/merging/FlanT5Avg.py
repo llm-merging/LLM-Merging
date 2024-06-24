@@ -5,27 +5,31 @@ from llm_merging.merging.Merges import Merges
 from peft import get_peft_model, set_peft_model_state_dict
 
 class FlanT5Avg(Merges):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
-        # Give an interesting name to your method
-        self.name = "flan_t5_avg"
+
+        '''
+        These values are meant to be modified by the user.
+        '''
         # Give a list of models to load for the merge 
         self.list_models = [ "lorahub/flan_t5_xl-wiki_qa_Is_This_True_",
                             "lorahub/flan_t5_xl-kilt_tasks_hotpotqa_complex_question"]
         
-        # Loaded models and configs 
-        self.loaded_models = {}
-        self.loaded_configs = {}
-
         # Hyperparameters 
         self.base_model_name = "google/flan-t5-xl"
         self.max_seq_len = 512
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.eval_batch_size = 128
 
         # Architecture must match base model. 
         self.architecture = "encoder_decoder"
+
+        '''
+        These are variables used later in the code and not intended to be set, but feel free to adapt to your use case.  
+        '''
+        # Loaded models and configs 
+        self.loaded_models = {}
+        self.loaded_configs = {}
 
         # Merged model parameters
         self.merged_model = {}
