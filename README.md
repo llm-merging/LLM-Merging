@@ -49,7 +49,7 @@ python llm_merging/setup.py install
 python llm_merging/main.py -m {merging_method}
 ```
 
-The datasets (CosmosQA and BoolQ) are mainly included for ensuring the merging method (with eval on those datasets) run in under the 1 hour time limit. 
+The datasets (CosmosQA and XSum) are mainly included for ensuring the merging method (with eval on those datasets) run in under the 1 hour time limit. 
 Our results on `llama_avg` are `{"cosmos_qa": {"accuracy": 0.234}, "xsum": {"rouge1": 0.123, "rouge2": 0.023, "rougeL": 0.093, "rougeLsum": 0.102}}` , which run in about `25` minutes on our A6000. 
 
 
