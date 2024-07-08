@@ -64,4 +64,8 @@ tar -cvf llm-merging.tar LLM-Merging
 
 Attach the tar file in an email and send to `llm.merging@gmail.com` with the subject as `submission: {method_name}` where `{method_name}` is the same method_name used when calling `llm_merging/main.py`.
 
+## Leaderboard 
+
+The leaderboard of the submitted solutions can be found [here](https://huggingface.co/spaces/margsli/merging_competition). Please note that your submission might not appear on the leaderboard immediately, as it is updated every few days. If you encounter any issues, please contact us.
+
 Note this submission method is only temporary and another automatic submission method should be comming soon. 
