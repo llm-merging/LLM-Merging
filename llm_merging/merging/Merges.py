@@ -5,6 +5,7 @@ from peft import load_peft_weights, PeftConfig
 from safetensors.torch import save_file
 
 
+
 from transformers import (
     AutoModelForSeq2SeqLM,
     AutoModelForCausalLM,
@@ -30,6 +31,8 @@ class Merges(object):
         self.target_tokenizer = None
 
         self.base_model_name = None
+        self.base_model_revision_id = None
+
         self.max_seq_len = None
         self.max_gen_len = None
 
@@ -46,9 +49,9 @@ class Merges(object):
 
     def _load_base_model(self):
         if self.architecture == "encoder_decoder":
-            self.base_model =  AutoModelForSeq2SeqLM.from_pretrained(self.base_model_name, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
+            self.base_model =  AutoModelForSeq2SeqLM.from_pretrained(self.base_model_name, revision=self.base_model_revision_id, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
         elif self.architecture == "decoder":
-            self.base_model =  AutoModelForCausalLM.from_pretrained(self.base_model_name, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
+            self.base_model =  AutoModelForCausalLM.from_pretrained(self.base_model_name, revision=self.base_model_revision_id, token=os.environ["HF_AUTH_TOKEN"]).to(self.device)
         else:
             raise NotImplementedError(f"Architecture not implemented {self.architecture}")
         
@@ -60,6 +63,7 @@ class Merges(object):
 
                 self.tokenizer = AutoTokenizer.from_pretrained(
                     self.base_model_name,
+                    revision=self.base_model_revision_id,
                     model_max_length=self.max_seq_len,
                     legacy=False,
                     token=os.environ["HF_AUTH_TOKEN"]
@@ -70,6 +74,7 @@ class Merges(object):
                     
                 self.input_tokenizer = AutoTokenizer.from_pretrained(
                     self.base_model_name,
+                    self.base_model_revision_id,
                     model_max_length=self.max_seq_len,
                     legacy=False,
                     token=os.environ["HF_AUTH_TOKEN"]
@@ -117,9 +122,9 @@ class Merges(object):
         assert len(self.list_models) > 0, f"List of models must include at leat 1 model"
 
         parameter_names = None
-        for model_name in self.list_models:
+        for model_name, revision_id in self.list_models:
 
-            peft_model_parameters = load_peft_weights(model_name)
+            peft_model_parameters = load_peft_weights(model_name, revision=revision_id, token=os.environ["HF_AUTH_TOKEN"])
             peft_config = PeftConfig.from_pretrained(model_name)
 
             if parameter_names is None:

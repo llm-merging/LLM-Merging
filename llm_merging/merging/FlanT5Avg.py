@@ -13,11 +13,12 @@ class FlanT5Avg(Merges):
         These values are meant to be modified by the user.
         '''
         # Give a list of models to load for the merge 
-        self.list_models = [ "lorahub/flan_t5_xl-wiki_qa_Is_This_True_",
-                            "lorahub/flan_t5_xl-kilt_tasks_hotpotqa_complex_question"]
+        self.list_models = [("lorahub/flan_t5_xl-wiki_qa_Is_This_True_", "30a1ee2f857196c1eb996d854548cc19f45ac642"), 
+                            ("lorahub/flan_t5_xl-kilt_tasks_hotpotqa_complex_question", "27d014366bec1c5333ba2e2fae966b7de3c02df1")]
         
         # Hyperparameters 
         self.base_model_name = "google/flan-t5-xl"
+        self.base_model_revision_id = "7d6315df2c2fb742f0f5b556879d730926ca9001"
         self.max_seq_len = 512
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
