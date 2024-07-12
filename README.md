@@ -58,7 +58,7 @@ After modifying the file, tar the file into a tarball using the command:
 tar -cvf llm-merging.tar LLM-Merging
 ```
 
-Attach the tar file in an email and send it to `llm.merging@gmail.com` with the subject `submission: {method_name}` where `{method_name}` is the same method_name used when calling `llm_merging/main.py`.
+Submit the tar file using this [form](https://docs.google.com/forms/d/17TPg7N02o8qvw1czx55Zbh_5Kp7-YStUIOhQDJYc23g/)
 
 ## Leaderboard
 
