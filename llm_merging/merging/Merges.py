@@ -74,7 +74,7 @@ class Merges(object):
                     
                 self.input_tokenizer = AutoTokenizer.from_pretrained(
                     self.base_model_name,
-                    self.base_model_revision_id,
+                    revision=self.base_model_revision_id,
                     model_max_length=self.max_seq_len,
                     legacy=False,
                     token=os.environ["HF_AUTH_TOKEN"]
