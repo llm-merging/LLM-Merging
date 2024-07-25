@@ -10,6 +10,12 @@
 
 This repository contains the starter code for the LLM-Merging competition.
 
+## Important Tips
+1.  Please do not specify any device_id in the code because the device_id might not hold in our setup. If you need to specify a device_id in your setup, one solution is to use environment variables like
+```bash
+export CUDA_VISIBLE_DEVICES=0  
+```
+
 ## Setup Environment
 
 The library was tested on CUDA 10.1 on an A6000.
@@ -55,7 +61,7 @@ The datasets (CosmosQA and XSum) are mainly included to ensure the merging metho
 After modifying the file, tar the file into a tarball using the command:
 
 ```bash
-tar -cvf llm-merging.tar LLM-Merging
+tar -cvf {merging_method}.tar LLM-Merging
 ```
 
 Submit the tar file using this [form](https://docs.google.com/forms/d/17TPg7N02o8qvw1czx55Zbh_5Kp7-YStUIOhQDJYc23g/)
