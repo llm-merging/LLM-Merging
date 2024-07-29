@@ -15,6 +15,14 @@ This repository contains the starter code for the LLM-Merging competition.
 ```bash
 export CUDA_VISIBLE_DEVICES=0  
 ```
+2. Please do not specify any filepaths because they may not be the same in our setup. If you need to specify the HuggingFace cache, one solution is to use environment variables like
+```bash
+export HUGGINGFACE_HUB_CACHE=/tmp/
+```
+and then access this path in Python via 
+```python
+path=os.environ["HUGGINGFACE_HUB_CACHE"]
+```
 
 ## Setup Environment
 
