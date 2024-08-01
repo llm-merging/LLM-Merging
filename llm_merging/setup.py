@@ -15,7 +15,8 @@ setup(
         "llm_merging.merging.Merges": [
             "llama_avg = llm_merging.merging.LlamaAvg:LlamaAvg",
             "flan_t5_avg = llm_merging.merging.FlanT5Avg:FlanT5Avg",
-            "our_method = llm_merging.merging.OurMethod:OurMethod"
+            "our_method_llama = llm_merging.merging.OurMethodLlamaAvg:OurMethodLlamaAvg",
+            "our_method_flanT5 = llm_merging.merging.OurMethodFlanT5Avg:OurMethodFlanT5Avg"
         ]
     },
 )
