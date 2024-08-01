@@ -125,6 +125,7 @@ def evaluate_model(
         # Get dataset_name from filepath assuming the filepath is in the format of "data/{dataset_name}.json"
         dataset_name = dataset_filepath.split("/")[-1].replace(".json", "")
         all_scores[dataset_name] = score
+        print(all_scores[dataset_name])
 
         # Save the predictions 
         with open(os.path.join(prediction_dir, f"{dataset_name}.jsonl"), "w+") as f:

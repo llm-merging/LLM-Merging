@@ -4,7 +4,7 @@ from llm_merging.merging.Merges import Merges
 from peft import get_peft_model, set_peft_model_state_dict
 
 
-class LlamaAvg(Merges):
+class OurMethod(Merges):
     def __init__(self, name, base_model, models, parameter_lambdas):
         super().__init__(name)
 
