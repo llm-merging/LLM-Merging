@@ -134,3 +134,5 @@ def evaluate_model(
 
     with open(os.path.join(output_dir, f"scores.jsonl"), "a+") as f:
         f.write(json.dumps(all_scores) + "\n")
+
+    return all_scores
