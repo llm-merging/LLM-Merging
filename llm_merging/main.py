@@ -71,7 +71,7 @@ def main_func(merge_method):
         assert len(args.dataset_filepaths) == len(args.eval_types), "All lists should be of the same length"
 
         # Evaluate method on datsets passed in (used for testing)
-        evaluate_model(
+        all_scores = evaluate_model(
             merge_method,
             args.dataset_filepaths,
             args.eval_types,
@@ -80,10 +80,11 @@ def main_func(merge_method):
     else:
         assert args.eval_types is None, "If dataset_filepaths is not passed, eval_types should not be passed in"
         # Evaluate method on fixed datasets (used for developing method)
-        evaluate_model(
+        all_scores = evaluate_model(
             merge_method,
             ["data/cosmos_qa.json", "data/xsum.json"],
             ["multiple_choice", "generation"],
             ["accuracy", "rouge"],
         )
 
+    return all_scores
