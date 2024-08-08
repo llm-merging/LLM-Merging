@@ -23,6 +23,7 @@ and then access this path in Python via
 ```python
 path=os.environ["HUGGINGFACE_HUB_CACHE"]
 ```
+3. When running `tar` on this repo `LLM-Merging` to submit it, please ensure this directory is called `LLM-Merging` and not renamed to any directories. This can cause issues when evaluating your submissions.   
 
 ## Setup Environment
 
