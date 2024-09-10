@@ -3,23 +3,22 @@ import torch
 from llm_merging.merging.Merges import Merges
 from peft import get_peft_model, set_peft_model_state_dict
 
-class LlamaAvg(Merges):
+class TinyLlamaAvg(Merges):
     def __init__(self, name):
         super().__init__(name)
 
         '''
         These values are meant to be modified by the user.
         '''
-        # Give a list of models to load for the merge. Each element is the list a is a tuple of (model, revision_id). We recommend specifying a revision id to ensure the model was not modified after May 31 
-        self.list_models = [("abcdabcd987/gsm8k-llama2-7b-lora-16", "636b5eb8da724edae406ba69ef90fd06478e6df7"), 
-                            ("FinGPT/fingpt-forecaster_dow30_llama2-7b_lora", "69f77190315afdb03a889d89bf2a0f932b311617")]
+            # Give a list of models to load for the merge. Each element is the list a is a tuple of (model, revision_id). We recommend specifying a revision id to ensure the model was not modified after May 31
+        self.list_models = [("TinyLlama/TinyLlama_v1.1", "f67f7cf6a907e567552b946699a9b9b45394fc46"),
+                            ("TinyLlama/TinyLlama_v1.1_math_code", "36978c95f61ba8078250f04d71b5404fa9733614")]
 
         # Hyperparameters 
-        self.base_model_name = "meta-llama/Llama-2-7b-hf"
+        self.base_model_name = "TinyLlama/TinyLlama_v1.1"
         # We recommend specifying a revision id to ensure the model was not modified after May 31 
-        self.base_model_revision_id = "01c7f73d771dfac7d292323805ebc428287df4f9"
-        self.is_peft = True
-
+        self.base_model_revision_id = "f67f7cf6a907e567552b946699a9b9b45394fc46"
+        self.is_peft = False
 
         self.max_seq_len = None
         self.max_gen_len = 64
@@ -66,12 +65,6 @@ class LlamaAvg(Merges):
                 if merged_parameter is None:
                     merged_parameter = torch.clone(parameter) * parameter_lambda
                 else:
-                    # first model has rank 16 and second model has rank 8, so we expand the second model to rank 16 by adding zeros
-                    if "A" in parameter_name:
-                        parameter = torch.cat([torch.zeros_like(parameter), parameter], dim=0)
-                    else:
-                        assert "B" in parameter_name
-                        parameter = torch.cat([torch.zeros_like(parameter), parameter], dim=1)
                     merged_parameter += parameter * parameter_lambda
             self.merged_model[parameter_name] = merged_parameter
 
@@ -84,14 +77,7 @@ class LlamaAvg(Merges):
         '''
         4) Load merged model into base model 
         '''
-        # Modify the base model. This is needed for Peft, which wraps the base_model in a Peft wrapper. 
-        huggingface_config = list(self.loaded_configs.values())[0]
-        if huggingface_config is not None:
-            self.base_model = get_peft_model(self.base_model, huggingface_config)
-            set_peft_model_state_dict(self.base_model, self.merged_model)
-        
-        else:
-            self.base_model.load(self.merged_model)
+        self.base_model.load_state_dict(self.merged_model)
 
         # Requires to make results deterministic. If not set, we will just run once and use the results from the first pass. 
         self.base_model.eval()

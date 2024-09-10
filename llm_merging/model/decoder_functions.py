@@ -159,10 +159,17 @@ def tokenize_batch(input_tokenizer, target_tokenizer, batch, device):
         if key in batch:
             # The values of the batch are normally a list of text.The exception is that for answer_choices, the values  is a list of list. We flatten this to a single list to pass is into the tokenizer 
             if key == "answer_choices":
-                text = [item for list in batch[key] for item in list]
+                text = batch[key]
+                for i, t in enumerate(text):
+                    if t[0] == "[":
+                        import ast
+                        text[i] = ast.literal_eval(t)
+                text = [item for list in text for item in list]
             else:
                 text = batch[key]
-
+                for i, t in enumerate(text):
+                    if isinstance(t, (int, float)):
+                        text[i] = str(t)
         tokenized_dict = tokenizer(
             text,
             return_tensors="pt",

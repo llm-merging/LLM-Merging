@@ -1,4 +1,4 @@
-import json 
+import pandas as pd
 
 class Dataset(object):
     def __init__(
@@ -6,14 +6,13 @@ class Dataset(object):
         dataset_filepath: str,
     ):
         self.dataset = []
-        with open(dataset_filepath, "r") as f:
-            for line in f.readlines():
-                datapoint = json.loads(line.strip("\n"))
-                self.dataset.append(datapoint)
+        self.dataset = pd.read_csv(dataset_filepath).to_dict('records')
+        for dp in self.dataset:
+            if not dp['answer_choices'] or dp['answer_choices'] != dp['answer_choices']:
+                del dp['answer_choices']
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
         return self.dataset[idx]
-

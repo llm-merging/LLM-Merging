@@ -4,12 +4,11 @@ import os
 from peft import load_peft_weights, PeftConfig
 from safetensors.torch import save_file
 
-
-
 from transformers import (
+    AutoConfig,
     AutoModelForSeq2SeqLM,
     AutoModelForCausalLM,
-    AutoTokenizer
+    AutoTokenizer,
 )
 
 import llm_merging.model.decoder_functions as decoder_functions
@@ -32,6 +31,7 @@ class Merges(object):
 
         self.base_model_name = None
         self.base_model_revision_id = None
+        self.is_peft = False
 
         self.max_seq_len = None
         self.max_gen_len = None
@@ -123,18 +123,35 @@ class Merges(object):
 
         parameter_names = None
         for model_name, revision_id in self.list_models:
+            if self.is_peft:
+                peft_model_parameters = load_peft_weights(model_name, revision=revision_id, token=os.environ["HF_AUTH_TOKEN"])
+                peft_config = PeftConfig.from_pretrained(model_name)
 
-            peft_model_parameters = load_peft_weights(model_name, revision=revision_id, token=os.environ["HF_AUTH_TOKEN"])
-            peft_config = PeftConfig.from_pretrained(model_name)
+                if parameter_names is None:
+                    parameter_names = set(peft_model_parameters.keys())
 
-            if parameter_names is None:
-                parameter_names = set(peft_model_parameters.keys())
+                if parameter_names != set(peft_model_parameters.keys()):
+                    print(f"WARNING: parameters in {model_name} do not match {self.list_models[0]}")
 
-            if parameter_names != set(peft_model_parameters.keys()):
-                print(f"WARNING: parameters in {model_name} do not match {self.list_models[0]}")
+                self.loaded_models[model_name] = peft_model_parameters 
+                self.loaded_configs[model_name] = peft_config
 
-            self.loaded_models[model_name] = peft_model_parameters 
-            self.loaded_configs[model_name] = peft_config
+            else:
+                if self.architecture == "encoder_decoder":
+                    model_parameters = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=revision_id, token=os.environ["HF_AUTH_TOKEN"]).to(self.device).state_dict()
+                elif self.architecture == "decoder":
+                    model_parameters = AutoModelForCausalLM.from_pretrained(model_name, revision=revision_id, token=os.environ["HF_AUTH_TOKEN"]).to(self.device).state_dict()
+                else:
+                    raise NotImplementedError(f"Architecture not implemented {self.architecture}")
+
+                if parameter_names is None:
+                    parameter_names = set(model_parameters.keys())
+
+                if parameter_names != set(model_parameters.keys()):
+                    print(f"WARNING: parameters in {model_name} do not match {self.list_models[0]}")
+
+                self.loaded_models[model_name] = model_parameters 
+                self.loaded_configs[model_name] = AutoConfig.from_pretrained(model_name)
 
     def merge(
         self,

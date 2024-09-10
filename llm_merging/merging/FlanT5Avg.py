@@ -19,6 +19,7 @@ class FlanT5Avg(Merges):
         # Hyperparameters 
         self.base_model_name = "google/flan-t5-xl"
         self.base_model_revision_id = "7d6315df2c2fb742f0f5b556879d730926ca9001"
+        self.is_peft = True
         self.max_seq_len = 512
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

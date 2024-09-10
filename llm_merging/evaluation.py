@@ -1,6 +1,7 @@
+import evaluate 
 import json 
 import os 
-import evaluate 
+import pandas as pd
 
 from typing import List, Dict, Any
 
@@ -47,8 +48,6 @@ def collate_fn(batch_of_datapoints: List[Dict]) -> Dict[Any, List]:
 def evaluate_dataset(
     merge_method,
     dataset_filepath: str,
-    eval_type: str,
-    metric: str,
 ) -> (Dict, List):
 
     data_loader = data.DataLoader(
@@ -66,15 +65,14 @@ def evaluate_dataset(
             # There are two types of evaluation models:
             # 1) multiple choice where the model scores each choice and predicts the choice with the highest score 
             # 2) generation where the model generate some output give some input 
+            eval_type = batch["eval_type"][0]
             if eval_type == "multiple_choice":
                 (
                     predicted_choice,
                     answer_choice_scores,
                 ) = merge_method.predict_multiple_choice(batch)
 
-                batch["predicted_choice"] = predicted_choice.cpu().numpy().tolist()
-                batch["answer_choices_scores"] = answer_choice_scores.cpu().numpy().tolist()
-                
+                batch["prediction"] = str(predicted_choice.cpu().numpy().tolist()[0])
                 all_batches.extend(convert_dict_of_lists_to_list_of_dicts(batch))
             
             else:
@@ -83,33 +81,16 @@ def evaluate_dataset(
                     generated_ids, generated_txt
                 ) = merge_method.generate(batch
                 )
-                batch["predicted_ids"] = generated_ids
-                batch["predicted_text"] = generated_txt 
+                batch["prediction"] = generated_txt 
                 all_batches.extend(convert_dict_of_lists_to_list_of_dicts(batch))
 
-    if metric == "accuracy":
-        accuracy = evaluate.load('accuracy')
-        score = accuracy.compute(references=[example["label"] for example in all_batches], predictions=[example["predicted_choice"] for example in all_batches])
-    elif metric == "rouge":
-        rouge = evaluate.load('rouge')
-        score = rouge.compute(
-            predictions=[example["predicted_text"] for example in all_batches],
-            references=[example["target"] for example in all_batches])
-    elif metric == "none":
-        score = {}
-    else:
-        raise NotImplementedError(f"Invalid metric {metric}")
+    return all_batches
 
-    for metric, value in score.items():
-        score[metric] = round(value, 3)
-
-    return score, all_batches
 
 def evaluate_model(
     merge_method,
     all_dataset_filepaths: List[str],
-    all_eval_types: List[str],
-    all_metrics: List[str],
+    output_folder: str,
 ) -> Dict:   
     output_dir = os.path.join("output", merge_method.get_name())
     prediction_dir = os.path.join(output_dir, "predictions")
@@ -119,17 +100,9 @@ def evaluate_model(
 
     all_scores = {}
 
-    for dataset_filepath, eval_type, metric in zip(all_dataset_filepaths, all_eval_types, all_metrics):
-        score, dataset_predictions = evaluate_dataset(merge_method, dataset_filepath, eval_type, metric)
-
-        # Get dataset_name from filepath assuming the filepath is in the format of "data/{dataset_name}.json"
-        dataset_name = dataset_filepath.split("/")[-1].replace(".json", "")
-        all_scores[dataset_name] = score
-
-        # Save the predictions 
-        with open(os.path.join(prediction_dir, f"{dataset_name}.jsonl"), "w+") as f:
-            for example in dataset_predictions:
-                f.write(json.dumps(example) + "\n")        
-
-    with open(os.path.join(output_dir, f"scores.jsonl"), "a+") as f:
-        f.write(json.dumps(all_scores) + "\n")
+    for dataset_filepath in all_dataset_filepaths:
+        dataset_predictions = evaluate_dataset(merge_method, dataset_filepath)
+        dp_df = pd.DataFrame(dataset_predictions)
+        dp_df["dummy_field"] = 0
+        fn = os.path.basename(dataset_filepath)
+        dp_df.to_csv(f"{output_folder}/{fn}", columns=["id", "prediction", "dummy_field"], index=False)
