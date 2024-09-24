@@ -43,7 +43,7 @@ export HF_AUTH_TOKEN=""
 
 ## Developing New Merging Methods
 
-Do not modify any files other than the new file you create, and the files below in the manner described. Doing so can result in the grounds for invalidating your submission. If you need to change code in other ways, feel free to open a pull request.
+You may make some modifications to the starter kit code, constrained by the terms listed under the Submissions section.
 
 1. To add a new merging method, create a new file in `llm_merging/merging`.
 
@@ -66,6 +66,12 @@ python llm_merging/main.py -m {merging_method}
 The validation dataset (consisting of CosmosQA and XSum) is mainly included to ensure the merging method (with evaluation on those datasets) runs in under the 1-hour time limit. Our results on `llama_avg` are `{"cosmos_qa": {"accuracy": 0.234}, "xsum": {"rouge1": 0.123, "rouge2": 0.023, "rougeL": 0.093, "rougeLsum": 0.102}}`, which run in about 25 minutes on our A6000.
 
 ## Submissions
+
+Most modifications to the starter kit are allowed. In general, any change that honors the spirit of the competition, to understand how best to merge models, will be allowed. For example, modifying the generation code to allow for dynamic selection of a prompt is allowed, whether that's your own code or imported. Changes which are not allowed might include optimizations focused only on making the forward pass of a model faster. This is because squeezing out such speedups does not contribute to drawing any conclusions about the merging method.
+
+You may use any publicly available library/module, as long as we will also be able to install it easily from a requirements or dependency list. You may finetune the model, but keep in mind that the compute limits apply to the finetuning stage as well, and you will eventually need to run your code, exactly as it is, on a held out test set that you will not have access to until after you finalize and submit your code.
+
+### How to submit
 
 You must submit the output file on Kaggle, and the model files via the instructions below.
 
