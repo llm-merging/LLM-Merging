@@ -59,7 +59,7 @@ You may make some modifications to the starter kit code, constrained by the term
 ## Test Method
 
 ```bash
-python llm_merging/setup.py install
+python setup.py install
 python llm_merging/main.py -m {merging_method}
 ```
 
